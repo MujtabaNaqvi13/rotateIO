@@ -24,6 +24,8 @@ This document lists practical steps to optimize assets for web delivery.
 - Stream large map chunks and only load adjacent chunks as players move around.
 - Use `AssetLoader.loadAssetByName()` for on-demand chunk loads (already implemented in client).
 
+Implementation note: the client now implements a simple streaming loader that divides the map into 3 columns by default and loads the current chunk plus adjacent chunks automatically (`script.js` methods `loadMapChunksAroundPlayer`, `loadMapChunk`, `unloadChunk`). Tune `chunkSize` and `chunkLoadRadius` in the `RotateIOGame` constructor to adjust behavior.
+
 6) Caching
 - Use Service Worker and Cache API (already implemented) for essentials and cache-on-fetch strategy for lazy assets.
 - Consider IndexedDB for very large binary assets if needed.

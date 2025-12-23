@@ -63,6 +63,12 @@ class RotateIOGame {
             { x: 80, y: 80 }, { x: 1520, y: 80 }, { x: 80, y: 820 }, { x: 1520, y: 820 }, { x: 800, y: 450 }
         ];
 
+        // Chunk streaming state (map is split into named chunks: map-city-1-chunk0...)
+        this.mapChunksLoaded = new Set(); // set of loaded chunk names
+        this.mapChunkRects = {}; // map chunk name => array of rects added from chunk (for unloading)
+        this.chunkSize = { width: Math.ceil(this.arenaSize.width/3), height: Math.ceil(this.arenaSize.height/1) }; // simple 3-column split by default
+        this.chunkLoadRadius = 1; // load current and adjacent chunks
+
         // Persistent kill feed
         this.killFeed = [];
 
@@ -96,6 +102,10 @@ class RotateIOGame {
         
         // Start match timer
         this.startMatchTimer();
+
+        // Start periodic check to stream map chunks around the player
+        this.chunkCheckInterval && clearInterval(this.chunkCheckInterval);
+        this.chunkCheckInterval = setInterval(() => this.loadMapChunksAroundPlayer(), 1000);
     }
     
     resizeCanvas() {
@@ -930,6 +940,70 @@ class RotateIOGame {
             if (!this.collidesWithMap(x, y, 20)) return { x, y };
         }
         return { x: 100, y: 100 };
+    }
+
+    // --- Map chunk streaming ---
+    // Load chunk by index (e.g., 0,1,2 maps to manifest names)
+    async loadMapChunk(index) {
+        const name = `map-city-1-chunk${index}`;
+        if (this.mapChunksLoaded.has(name)) return;
+        // show a small HUD indicator
+        const badge = document.getElementById('bgLoadBadge');
+        if (badge) {
+            const txt = badge.querySelector('#bgProgressText'); if (txt) txt.textContent = `Loading chunk ${index}...`;
+        }
+        try {
+            const data = await window.AssetLoader.loadAssetByName(name);
+            // data expected to be JSON with blocks: [{x,y,w,h}, ...]
+            if (data && Array.isArray(data.blocks)) {
+                this.mapChunkRects[name] = [];
+                data.blocks.forEach(b => {
+                    const rect = { x: b.x, y: b.y, w: b.w, h: b.h };
+                    this.mapRects.push(rect);
+                    this.mapChunkRects[name].push(rect);
+                });
+            }
+            this.mapChunksLoaded.add(name);
+        } catch (err) {
+            console.warn('Failed to load chunk', name, err);
+        } finally {
+            if (badge) {
+                const txt = badge.querySelector('#bgProgressText'); if (txt) txt.textContent = 'Background loading: in progress';
+            }
+        }
+    }
+
+    unloadChunk(index) {
+        const name = `map-city-1-chunk${index}`;
+        if (!this.mapChunksLoaded.has(name)) return;
+        if (this.mapChunkRects[name]) {
+            // remove rects from mapRects
+            this.mapRects = this.mapRects.filter(r => !this.mapChunkRects[name].includes(r));
+            delete this.mapChunkRects[name];
+        }
+        this.mapChunksLoaded.delete(name);
+    }
+
+    loadMapChunksAroundPlayer() {
+        const p = this.players[this.playerId];
+        if (!p) return;
+        const chunkX = Math.floor(p.x / this.chunkSize.width);
+        // load chunks in radius
+        const wanted = new Set();
+        for (let dx = -this.chunkLoadRadius; dx <= this.chunkLoadRadius; dx++) {
+            const idx = chunkX + dx;
+            if (idx < 0) continue;
+            wanted.add(idx);
+            // fire and forget
+            this.loadMapChunk(idx);
+        }
+        // unload chunks not wanted
+        Array.from(this.mapChunksLoaded).forEach(name => {
+            const m = name.match(/chunk(\d+)$/);
+            if (!m) return;
+            const idx = parseInt(m[1], 10);
+            if (!wanted.has(idx)) this.unloadChunk(idx);
+        });
     }
 
     // Persistent kill feed
