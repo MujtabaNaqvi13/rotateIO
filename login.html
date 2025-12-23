@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login - ROTATE.IO</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Minimal modern centered login */
+    .auth-page{display:flex;min-height:100vh;align-items:center;justify-content:center;background:#041022;color:#e6f0ff}
+    .auth-card{width:360px;padding:28px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));box-shadow:0 6px 20px rgba(2,6,23,0.6);}
+    .auth-card h1{margin:0 0 12px;font-size:20px}
+    .auth-input{width:100%;padding:10px 12px;margin:8px 0;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#fff}
+    .auth-cta{width:100%;padding:10px;border-radius:8px;border:none;background:#4cc9f0;color:#041022;font-weight:700;cursor:pointer;margin-top:12px}
+    .auth-actions{display:flex;justify-content:space-between;margin-top:10px}
+    .link{color:#a6e3ff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <h1>ROTATE.IO</h1>
+      <p style="margin:0 0 12px;color:#bcd;">Welcome back — log in to continue or sign up to create an account.</p>
+      <input id="email" class="auth-input" placeholder="Email" type="email" />
+      <input id="password" class="auth-input" placeholder="Password" type="password" />
+      <div class="auth-actions">
+        <button id="loginBtn" class="auth-cta">Login</button>
+        <button id="showSignupBtn" class="auth-cta" style="background:#4361ee;">Sign Up</button>
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+        <a id="forgot" class="link">Forgot?</a>
+        <a href="index.html" class="link">Play as Guest</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      if (!email || !pass) return alert('Enter credentials');
+      try {
+        const res = await fetch('/api/login', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ email, password: pass }) });
+        const data = await res.json();
+        if (!data.ok) return alert('Login failed: '+(data.error||''));
+        if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+        window.location.href = 'index.html';
+      } catch (e) { alert('Login error'); }
+    });
+
+    document.getElementById('showSignupBtn').addEventListener('click', () => {
+      const email = document.getElementById('email').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      if (!email || !pass) return alert('Enter email & password to sign up');
+      fetch('/api/signup', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ email, password: pass, displayName: email.split('@')[0] }) })
+        .then(r => r.json()).then(data => { if (!data.ok) return alert('Signup failed: '+(data.error||'')); alert('Signed up — check email to verify, then login.'); }).catch(()=>alert('Signup error'));
+    });
+
+    document.getElementById('forgot').addEventListener('click', () => {
+      const email = prompt('Enter your account email'); if (email) fetch('/api/password-reset-request', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ email }) }).then(r=>r.json()).then(()=> alert('If an account exists, a reset email has been sent.'));
+    });
+  </script>
+</body>
+</html>

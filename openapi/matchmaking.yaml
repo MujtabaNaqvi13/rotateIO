@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: ROTATE.IO Matchmaking API
+  version: 1.0.0
+  description: API for matchmaking and lobby services
+servers:
+  - url: http://localhost:3001
+paths:
+  /api/queue/quickplay:
+    post:
+      summary: Enqueue for quickplay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: queued or matched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued:
+                    type: boolean
+                  matched:
+                    type: boolean
+                  server:
+                    type: object
+  /api/lobby/create:
+    post:
+      summary: Create a lobby with join code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                map:
+                  type: string
+                hostId:
+                  type: string
+      responses:
+        '200':
+          description: Lobby created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  code:
+                    type: string
+                  lobby:
+                    type: object
+  /api/lobby/join:
+    post:
+      summary: Join a lobby by code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Joined lobby
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  lobby:
+                    type: object
+components: {}

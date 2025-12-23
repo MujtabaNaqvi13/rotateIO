@@ -1,0 +1,25 @@
+{
+  "name": "rotate-io-server",
+  "version": "0.1.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node scripts/migrate.js",
+    "start:matchmaker": "node matchmaker.js",
+    "start:matchserver": "node match_server.js",
+    "simulate-clients": "node simulate_clients.js"
+  },
+  "dependencies": {
+    "argon2": "^0.30.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.4",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "^4.7.2",
+    "pg": "^8.11.0",
+    "ioredis": "^5.3.2",
+    "uuid": "^9.0.0"
+  }
+}
