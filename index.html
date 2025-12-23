@@ -32,6 +32,7 @@
                         <input id="lobbyCodeInput" placeholder="Join code" maxlength="8" />
                         <button id="joinLobbyBtn">Join</button>
                         <button id="createLobbyBtn">Create Lobby</button>
+                        <button id="guestPlayBtn" class="mode-btn">Play as Guest</button>
                     </div>                </div>
             </div>
         </div>
@@ -96,23 +97,74 @@
 
         <!-- Login is now a dedicated page. If not logged in, users are redirected to login.html -->
 
-        <div class="lobby-overlay hidden" id="lobbyOverlay">
-            <div class="lobby-box">
-                <h3>Lobby <span id="lobbyCodeTitle">ABCD12</span></h3>
-                <div id="lobbyMembers">
-                    <!-- members list populated dynamically -->
-                </div>
-                <div class="lobby-actions">
-                    <button id="leaveLobbyBtn">Leave</button>
-                    <button id="startLobbyBtn">Start Match</button>
-                </div>
-            </div>
-        </div>
+
 
         <div class="game-messages hidden" id="gameMessages"></div>
     </div>
     
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="loader.js"></script>
+    <script>
+      // Loading screen markup
+      document.addEventListener('DOMContentLoaded', async () => {
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.innerHTML = `
+          <div class="loading-card" role="status" aria-live="polite">
+            <h2>ROTATE.IO</h2>
+            <div class="progress-bar" aria-hidden="true"><div id="progressFill"></div></div>
+            <div id="progressText">Loading...</div>
+            <div class="small">Game will be interactive when essentials finish loading</div>
+          </div>`;
+        document.body.appendChild(overlay);
+
+        // Register SW and preload essentials
+        await window.AssetLoader.registerServiceWorker();
+        let loaded = 0, total = 1;
+        document.getElementById('progressText').textContent = 'Preparing...';
+        await window.AssetLoader.preloadEssential((l, t) => {
+          loaded = l; total = t; const pct = Math.round((loaded/total)*100); document.getElementById('progressFill').style.width = pct + '%'; document.getElementById('progressText').textContent = `Loading essentials (${pct}%)`;
+        });
+        // essentials loaded — show ready state and then fade overlay; create a persistent background loader badge
+        document.getElementById('progressText').textContent = 'Ready — loading remaining assets in background';
+
+        // create small background loader badge (sticky, dismissible)
+        const bgBadge = document.createElement('div');
+        bgBadge.id = 'bgLoadBadge';
+        bgBadge.style.position = 'fixed';
+        bgBadge.style.right = '12px';
+        bgBadge.style.bottom = '12px';
+        bgBadge.style.background = 'rgba(0,0,0,0.7)';
+        bgBadge.style.color = '#e6f0ff';
+        bgBadge.style.padding = '10px 14px';
+        bgBadge.style.borderRadius = '10px';
+        bgBadge.style.boxShadow = '0 6px 18px rgba(0,0,0,0.5)';
+        bgBadge.style.zIndex = 10001;
+        bgBadge.innerHTML = `<div style="min-width:160px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden"><div id="bgProgressFill" style="height:100%;width:0;background:linear-gradient(90deg,#4cc9f0,#4361ee)"></div></div><div style="font-size:12px;margin-top:6px;color:#bcd" id="bgProgressText">Background loading: 0%</div></div><button id="bgBadgeClose" style="background:transparent;border:0;color:#bcd;font-size:12px;cursor:pointer">✕</button></div>`;
+        document.body.appendChild(bgBadge);
+        document.getElementById('bgBadgeClose').addEventListener('click', () => bgBadge.remove());
+
+        // fade and remove the overlay after a short delay to keep UI interactive
+        setTimeout(()=> { const o = document.getElementById('loadingOverlay'); if (o) { o.style.opacity = '0'; setTimeout(()=>o.remove(),400); } }, 700);
+
+        // start lazy background fetch and update the badge; await completion so we can auto-hide the badge when done
+        try {
+          await window.AssetLoader.loadRemaining((l,t)=>{
+            const pct = Math.round((l/t)*100);
+            const el = document.getElementById('bgProgressText');
+            const fill = document.getElementById('bgProgressFill');
+            if (fill) fill.style.width = pct + '%';
+            if (el) el.textContent = `Background loading: ${pct}%`;
+          });
+          // completed
+          const doneEl = document.getElementById('bgProgressText'); if (doneEl) doneEl.textContent = 'Background loading complete';
+          setTimeout(()=>{ const b = document.getElementById('bgLoadBadge'); if (b) b.remove(); }, 900);
+        } catch (err) {
+          console.warn('Background load error', err);
+          const doneEl = document.getElementById('bgProgressText'); if (doneEl) doneEl.textContent = 'Background loading failed';
+        }
+      });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

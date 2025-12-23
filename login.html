@@ -29,7 +29,7 @@
       </div>
       <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
         <a id="forgot" class="link">Forgot?</a>
-        <a href="index.html" class="link">Play as Guest</a>
+        <a id="guestLink" class="link">Play as Guest</a>
       </div>
     </div>
   </div>
@@ -57,6 +57,13 @@
 
     document.getElementById('forgot').addEventListener('click', () => {
       const email = prompt('Enter your account email'); if (email) fetch('/api/password-reset-request', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ email }) }).then(r=>r.json()).then(()=> alert('If an account exists, a reset email has been sent.'));
+    });
+
+    document.getElementById('guestLink').addEventListener('click', (e) => {
+      // mark guest and ensure a stable guestId
+      localStorage.setItem('guest', 'true');
+      if (!localStorage.getItem('guestId')) localStorage.setItem('guestId', 'guest-'+Math.random().toString(36).slice(2,9));
+      window.location.href = 'index.html';
     });
   </script>
 </body>

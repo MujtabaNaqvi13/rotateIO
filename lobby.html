@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ROTATE.IO — Lobby</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="game-header">
+      <h1><i class="fas fa-users"></i> Lobby</h1>
+      <div style="display:flex;gap:12px;align-items:center">
+        <a href="index.html" class="mode-btn">Back to Game</a>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;background:rgba(0,0,0,0.45);padding:20px;border-radius:12px;">
+      <div id="lobbyControls">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="lobbyJoinCode" placeholder="Lobby code" />
+          <button id="doJoinBtn" class="mode-btn">Join</button>
+          <button id="doCreateBtn" class="mode-btn">Create</button>
+        </div>
+        <div style="margin-top:12px;color:#bcd;font-size:14px">Tip: You can create or join a lobby here. Hosts can start matches from this page.</div>
+      </div>
+
+      <div id="lobbyView" class="hidden" style="margin-top:18px">
+        <h3>Lobby <span id="lobbyCodeTitle">-</span></h3>
+        <div id="lobbyMembers" style="margin-top:8px"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button id="leaveBtn" class="mode-btn">Leave</button>
+          <button id="startBtn" class="mode-btn">Start Match</button>
+        </div>
+        <div id="lobbyStatus" style="margin-top:8px;color:#bcd"></div>
+      </div>
+    </div>
+  </div>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="lobby.js"></script>
+</body>
+</html>

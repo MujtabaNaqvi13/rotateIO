@@ -122,14 +122,20 @@ class RotateIOGame {
             return;
         }
 
-        // Try to use stored access token, otherwise attempt refresh
+        // Try to use stored access token, otherwise attempt refresh.
+        // If user selected guest mode, fall back to a local demo instead of forcing login.
         let token = localStorage.getItem('accessToken');
         if (!token) {
             const ok = await this.refreshAccessToken();
             token = localStorage.getItem('accessToken');
             if (!ok || !token) {
-                // redirect to login page
-                window.location.href = 'login.html';
+                // If guest flag is set, start local demo and don't force login
+                if (localStorage.getItem('guest') === 'true') {
+                    this.startLocalGame();
+                    return;
+                }
+                // Otherwise show login modal so the user can choose to sign in or play as guest
+                this.showLoginModal && this.showLoginModal();
                 return;
             }
         }
@@ -145,8 +151,14 @@ class RotateIOGame {
 
         this.socket.on('connect_error', (err) => {
             console.warn('Could not connect to server — falling back to local mode', err.message || err);
-            // if it's an auth error, show login modal
+            // if it's an auth error, prefer guest fallback instead of forcing login
             if (err && /auth|invalid/i.test(err.message || '')) {
+                if (localStorage.getItem('guest') === 'true') {
+                    this.socket && this.socket.close();
+                    this.socket = null;
+                    this.startLocalGame();
+                    return;
+                }
                 this.showLoginModal();
             }
             this.socket && this.socket.close();
@@ -269,6 +281,10 @@ class RotateIOGame {
                 e.preventDefault();
             }
         });
+
+        // Play as Guest button (header)
+        const guestBtn = document.getElementById('guestPlayBtn');
+        if (guestBtn) guestBtn.addEventListener('click', (e) => { e.preventDefault(); this.startGuestMode(); });
         
         document.addEventListener('keyup', (e) => {
             this.keys[e.key.toLowerCase()] = false;
@@ -523,6 +539,13 @@ class RotateIOGame {
             // ignore
         }
         return false;
+    }
+
+    // Start guest/local demo mode without redirecting user to login
+    startGuestMode() {
+        localStorage.setItem('guest', 'true');
+        if (!localStorage.getItem('guestId')) localStorage.setItem('guestId', 'guest-'+Math.random().toString(36).slice(2,9));
+        this.startLocalGame();
     }
 
     async logout() {
@@ -1336,25 +1359,13 @@ window.addEventListener('load', () => {
     const joinLobbyBtn = document.getElementById('joinLobbyBtn');
     const lobbyCodeInput = document.getElementById('lobbyCodeInput');
     if (createLobbyBtn) createLobbyBtn.addEventListener('click', async () => {
-        const mode = game.mode || 'rotating';
-        const hostId = game.playerId || ('guest-'+Math.random().toString(36).slice(2,8));
-        try {
-            const res = await fetch('http://localhost:3000/api/lobby/create', { method: 'POST', headers: { 'content-type':'application/json' }, body: JSON.stringify({ mode, map: 'city-1', hostId }) });
-            const data = await res.json();
-            if (!data.ok) return alert('Could not create lobby: '+(data.error||''));
-            showLobbyOverlay(data.lobby);
-        } catch (e) { alert('Create lobby failed'); }
+        // Open the dedicated lobby page to create a lobby (server interaction handled there)
+        window.location.href = 'lobby.html?action=create';
     });
     if (joinLobbyBtn) joinLobbyBtn.addEventListener('click', async () => {
-        const code = lobbyCodeInput.value.trim().toUpperCase();
-        if (!code) return alert('Enter code');
-        const userId = game.playerId || ('guest-'+Math.random().toString(36).slice(2,8));
-        try {
-            const res = await fetch('http://localhost:3000/api/lobby/join', { method: 'POST', headers: { 'content-type':'application/json' }, body: JSON.stringify({ code, userId }) });
-            const data = await res.json();
-            if (!data.ok) return alert('Join failed: '+(data.error||''));
-            showLobbyOverlay(data.lobby);
-        } catch (e) { alert('Join failed'); }
+        const code = (lobbyCodeInput && lobbyCodeInput.value) ? lobbyCodeInput.value.trim().toUpperCase() : '';
+        if (code) window.location.href = `lobby.html?join=${encodeURIComponent(code)}`;
+        else window.location.href = 'lobby.html';
     });
 
     // shop buttons

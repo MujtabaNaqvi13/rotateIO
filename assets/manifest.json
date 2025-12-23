@@ -1,0 +1,12 @@
+{
+  "assets": [
+    { "name": "ui-sprites", "url": "assets/ui/sprites.png", "type": "image", "priority": "essential" },
+    { "name": "player-sprite", "url": "assets/players/player.png", "type": "image", "priority": "essential" },
+    { "name": "map-city-1-chunk0", "url": "assets/maps/city-1/chunk0.json", "type": "json", "priority": "essential" },
+
+    { "name": "map-city-1-chunk1", "url": "assets/maps/city-1/chunk1.json", "type": "json", "priority": "lazy" },
+    { "name": "map-city-1-chunk2", "url": "assets/maps/city-1/chunk2.json", "type": "json", "priority": "lazy" },
+    { "name": "ambient-music", "url": "assets/audio/ambient.ogg", "type": "audio", "priority": "lazy" },
+    { "name": "background-image", "url": "assets/backgrounds/city_bg.png", "type": "image", "priority": "lazy" }
+  ]
+}

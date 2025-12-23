@@ -324,3 +324,11 @@ body {
 
 /* map visuals */
 .map-block { fill: rgba(20,30,40,0.95); stroke: rgba(255,255,255,0.04); }
+
+/* Loading overlay */
+#loadingOverlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.95), rgba(2,6,23,0.6));z-index:9999;transition:opacity 0.4s}
+.loading-card{width:420px;padding:24px;border-radius:12px;text-align:center;color:#e6f0ff}
+.loading-card h2{margin:0 0 12px;color:#fff}
+.progress-bar{height:12px;background:rgba(255,255,255,0.06);border-radius:8px;overflow:hidden;margin:12px 0}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,#4cc9f0,#4361ee)}
+.loading-card .small{font-size:12px;color:#bcd;margin-top:8px}
